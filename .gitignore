@@ -1,0 +1,12 @@
+node_modules/
+coverage/
+__pycache__/
+.env
+.env.*
+!.env.example
+.env-*
+*.tgz
+exports/
+imports/
+dist/
+*.tsbuildinfo
