@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { createApplication } from '../dist/app/create-application.js';
-import { catalog, listOperations, operationInfo, searchFields } from '../dist/modules/catalog/service.js';
+import { catalog, listOperations, operationInfo, searchFields, searchReferences } from '../dist/modules/catalog/service.js';
 
 const token = 'test-oauth-secret';
 const clientFor = (fetchImpl, options = {}) => createApplication({ token, counterId: 123, fetchImpl, ...options });
@@ -18,18 +18,58 @@ const report = (data, overrides = {}) => ({ data, total_rows: 5, totals: [7], sa
   sample_share: 1, contains_sensitive_data: false, total_rows_rounded: false,
   query: { dimensions: ['ym:s:browser'], metrics: ['ym:s:users'] }, ...overrides });
 
-test('catalog covers documented operations and searchable report fields', () => {
-  assert.equal(catalog.operations.length, 108);
-  assert.equal(new Set(catalog.operations.map((op) => op.id)).size, 108);
+test('catalog covers website analytics operations and searchable report fields', () => {
+  assert.equal(catalog.operations.length, 96);
+  assert.equal(new Set(catalog.operations.map((op) => op.id)).size, 96);
   assert.deepEqual([...new Set(catalog.operations.map((op) => op.category))].sort(), ['logs', 'management', 'stat']);
   assert.ok(listOperations({ search: 'счетчик' }).total > 0);
   assert.equal(listOperations({ category: 'logs' }).total, 7);
   assert.equal(searchFields({ search: 'ym:s:visits', kind: 'metric' }).fields[0].name, 'ym:s:visits');
-  assert.ok(searchFields({ search: 'доход' }).total > 0);
+  assert.ok(searchFields({ search: 'просмотр' }).total > 0);
   const info = operationInfo({ operationId: 'management_counter_addCounter', limit: 100 });
   assert.equal(info.method, 'POST');
   assert.equal(info.nextOffset, 100);
   assert.ok(info.bodyContentTypes.includes('application/json'));
+});
+
+test('catalog keeps organic acquisition, page analytics and event goals discoverable', () => {
+  for (const name of ['ym:s:visits', 'ym:pv:URL', 'ym:s:<attribution>TrafficSource',
+    'ym:s:<attribution>SearchEngineRoot', 'ym:s:<attribution>SearchPhrase',
+    'ym:s:<attribution>UTMSource', 'ym:s:<attribution>UTMCampaign',
+    'ym:s:goal<goal_id>reaches', 'ym:s:goal<goal_id>conversionRate']) {
+    assert.ok(searchFields({ search: name }).fields.some((field) => field.name === name), name);
+  }
+  assert.ok(searchReferences({ search: '/visits/source/search' }).total > 0);
+  assert.ok(searchReferences({ search: '/logs/fields/' }).total > 0);
+  for (const search of ['Директ', 'электронная коммерция', 'рекламные расходы', 'заказы CRM', 'РСЯ', 'Adfox', 'Prebid']) {
+    assert.equal(searchReferences({ search }).total, 0, search);
+  }
+  for (const name of ['ym:ad:visits', 'ym:ev:users', 'ym:s:<attribution>DirectClickOrder',
+    'ym:s:<attribution>Currency', 'ym:s:ecommercePurchases', 'ym:s:productID',
+    'ym:s:purchaseID', 'ym:s:cdpOrdersPayed', 'ym:s:goal<goal_id>converted<currency>Revenue',
+    'ym:s:adfoxShows', 'ym:s:adfoxPrice', 'ym:s:yanShows', 'ym:s:yanRevenuePerVisit',
+    'ym:s:hasAdBlocker', 'ym:s:blockedPercentage']) {
+    assert.equal(searchFields({ search: name }).total, 0, name);
+  }
+});
+
+test('excluded advertising and commerce operations cannot dispatch even by their old IDs', async () => {
+  let calls = 0;
+  const client = clientFor(async () => { calls++; return Response.json({}); });
+  for (const operationId of [
+    'management_clients_getClients', 'management_expense_uploadMultipart',
+    'management_expense_uploadRemoveSingleLine', 'management_expense_uploadRemoveBody_1',
+    'management_expense_findAll_2', 'management_expense_findById_2',
+    'management_schema_uploadSimpleOrders', 'management_schema_mapOrderStatuses',
+    'management_schema_getOrderStatuses', 'management_schema_uploadOrders',
+    'management_schema_uploadOrdersJson_1', 'management_schema_createProducts',
+  ]) {
+    assert.equal(listOperations({ search: operationId }).total, 0, operationId);
+    assert.throws(() => operationInfo({ operationId }), /Неизвестная операция/);
+    await assert.rejects(client.api.read({ operationId }), /Неизвестная операция/);
+    await assert.rejects(client.api.write({ operationId }), /Неизвестная операция/);
+  }
+  assert.equal(calls, 0);
 });
 
 test('every catalog operation dispatches to its documented route and HTTP method', async () => {

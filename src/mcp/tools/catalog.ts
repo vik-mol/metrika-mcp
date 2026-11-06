@@ -5,12 +5,12 @@ import { listOperations, operationInfo, searchReferences, searchFields } from '.
 
 export const registerCatalogTools = (server: McpServer): void => {
   registerTool(server, 'search_report_fields', {
-    description: 'Поиск группировок и метрик по идентификатору или русскому описанию: источники, доход, заказы, браузеры, устройства, география, контент, UTM, воронки. Возвращает имена параметризованных полей, описания и ссылки.',
+    description: 'Поиск группировок и метрик аналитики сайта по идентификатору или русскому описанию: посещаемость, страницы, события, цели, браузеры, устройства, география, контент, источники и UTM. Каталог без рекламы и электронной коммерции. Возвращает имена параметризованных полей, описания и ссылки.',
     inputSchema: fieldSearchSchema, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   }, searchFields);
 
   registerTool(server, 'list_api_operations', {
-    description: 'Поиск всех опубликованных методов API Метрики: счётчики, настройки, любые цели, фильтры, операции, доступы, представители, сегменты, примечания, CRM, импорт расходов/конверсий/звонков/чатов, Logs API. Возвращает operationId для read_api/write_api.',
+    description: 'Поиск методов API для аналитики сайта: счётчики, настройки, цели, фильтры, операции, доступы, представители, сегменты, примечания, контакты CRM, импорт конверсий/звонков/чатов, Logs API. Каталог без рекламных расходов, клиентов Директа, заказов и товаров. Возвращает operationId для read_api/write_api.',
     inputSchema: operationSearchSchema, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   }, listOperations);
 
@@ -20,7 +20,7 @@ export const registerCatalogTools = (server: McpServer): void => {
   }, operationInfo);
 
   registerTool(server, 'search_report_reference', {
-    description: 'Поиск официальных справочников группировок, метрик и полей Logs API по теме: трафик, аудитория, ecommerce, устройства, контент и другие. Возвращает ссылки на документацию.',
+    description: 'Поиск официальных справочников группировок, метрик и полей Logs API по теме: трафик, аудитория, страницы, события, цели, устройства, контент. Каталог без рекламы и электронной коммерции. Возвращает ссылки на документацию.',
     inputSchema: referenceSearchSchema, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   }, searchReferences);
 };

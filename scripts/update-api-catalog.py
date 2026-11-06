@@ -1,4 +1,5 @@
-"""Refresh the checked-in catalog from the official Yandex Metrica documentation."""
+"""Refresh the website analytics catalog from official Yandex Metrica docs."""
+import argparse
 import concurrent.futures
 import datetime
 import hashlib
@@ -13,6 +14,40 @@ from urllib.request import urlopen
 
 BASE = 'https://yandex.ru/dev/metrika/'
 ROOT = Path(__file__).resolve().parents[1]
+
+def apply_profile(catalog):
+    # Keep general analytics and contact/event imports. Exclude advertising,
+    # ad monetization and commerce; organic search and UTM tags remain useful.
+    commerce_operations = {
+        'management_schema_uploadSimpleOrders',
+        'management_schema_mapOrderStatuses',
+        'management_schema_getOrderStatuses',
+        'management_schema_uploadOrders',
+        'management_schema_uploadOrdersJson_1',
+        'management_schema_createProducts',
+    }
+    catalog['operations'] = [op for op in catalog['operations']
+        if not op['id'].startswith('management_expense_')
+        and op['id'] != 'management_clients_getClients'
+        and op['id'] not in commerce_operations]
+    paid_field = re.compile(r'^(?:<attribution>)?(?:Direct|Display|AdvEngine|Currency|HasGCLID|GCLIDPercentage|Openstat|marketSearchPhrase)', re.I)
+    ad_monetization_field = re.compile(r'^(?:adfox|yan(?!dex)|prebid|hasAdBlocker|blockedPercentage)', re.I)
+    commerce_field = re.compile(r'^(?:ecommerce|ePromotion|PProduct|product|purchase|cdpOrders|usersPurchase)', re.I)
+    catalog['fields'] = [field for field in catalog['fields']
+        if field['name'].split(':')[1] not in ('ad', 'ev')
+        and not paid_field.search(field['name'].split(':', 2)[2])
+        and not ad_monetization_field.search(field['name'].split(':', 2)[2])
+        and not commerce_field.search(field['name'].split(':', 2)[2])
+        and not re.search(r'(?:anyGoal|favoriteGoals|goal<goal_id>)converted<currency>Revenue', field['name'], re.I)]
+    excluded_reference = re.compile(
+        r'/(?:advertising|expenses_visits|ecommerce|cdp_orders)(?:/|$)'
+        r'|/visits/source/(?:direct|display|market)(?:/|$)'
+        r'|/presets/preset_(?:direct|expenses|ecommerce|cdp_orders)$'
+        r'|/visits/(?:yan|adfox)(?:/|$)'
+        r'|/presets/preset_(?:yan|adfox|prebid)$'
+        r'|/stat/direct-clicks$')
+    catalog['references'] = [ref for ref in catalog['references'] if not excluded_reference.search(ref['url'])]
+    return catalog
 
 class Text(HTMLParser):
     def __init__(self):
@@ -96,7 +131,7 @@ def report_fields():
                            'description': plain(match.group(3)), 'url': BASE + href + '#' + match.group(1)})
     return fields
 
-def main():
+def fetch_catalog():
     index = fetch('ru/')
     entries = [entry for entry in walk(index['toc']) if '/openapi/' in entry['href']]
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
@@ -110,12 +145,18 @@ def main():
     chats['note'] = 'Исправлена опечатка в пути списка чатов: используется общий список offline_conversions/uploadings.'
     assert len({op['id'] for op in operations}) == len(operations)
     references = [{'name': e.get('name', ''), 'url': BASE + e['href']} for e in walk(index['toc']) if '/stat/' in e['href'] or '/logs/fields/' in e['href']]
-    result = {'source': BASE+'ru/', 'revision': index['revision'], 'retrievedAt': datetime.date.today().isoformat(), 'operations': operations, 'references': references, 'fields': report_fields()}
+    return {'source': BASE+'ru/', 'revision': index['revision'], 'retrievedAt': datetime.date.today().isoformat(), 'operations': operations, 'references': references, 'fields': report_fields()}
+
+def write_catalog(result):
+    operations = result['operations']
     target = ROOT / 'src' / 'api-catalog.json'
     target.write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
     coverage = [
         '# Покрытие API Яндекс Метрики', '',
         'Снимок официального справочника: ' + result['retrievedAt'] + ', revision `' + result['revision'] + '`.',
+        '', 'Профиль: аналитика сайта без рекламы и электронной коммерции.',
+        'Исключены расходы и клиенты Директа, РСЯ, Adfox, Prebid, импорт заказов и товаров, рекламные и торговые поля отчётов.',
+        'Органический поиск, UTM-метки, события и обычные цели сохранены.',
         '', 'Всего: ' + str(len(operations)) + ' методов. Методы доступны через `read_api` / `write_api`;',
         'контракт и параметры — через `get_api_operation`. Новые методы после даты снимка требуют обновления каталога.',
         '', 'Проверка маршрутизации выполняется на подставном HTTP-клиенте; доступность для реального аккаунта определяется правами и квотами API.', '',
@@ -125,6 +166,13 @@ def main():
     for op in operations:
         coverage.append('| `' + op['id'] + '` | ' + op['method'] + ' | ' + op['name'] + ' | ' + ('чтение' if op['readOnly'] else 'запись') + ' | [Источник](' + op['documentationUrl'] + ') |')
     (ROOT / 'API-COVERAGE.md').write_text('\n'.join(coverage) + '\n')
-    print('Catalog:', len(operations), 'operations,', len(references), 'references')
+    print('Catalog:', len(operations), 'operations,', len(result['references']), 'references,', len(result['fields']), 'fields')
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--from-snapshot', action='store_true', help='Apply the profile to the existing snapshot without downloading documentation')
+    args = parser.parse_args()
+    result = json.loads((ROOT / 'src' / 'api-catalog.json').read_text()) if args.from_snapshot else fetch_catalog()
+    write_catalog(apply_profile(result))
 
 if __name__ == '__main__': main()

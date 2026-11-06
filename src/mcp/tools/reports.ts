@@ -27,7 +27,7 @@ export const registerReportsTools = (server: McpServer, app: Application): void 
   );
 
   registerTool(server, 'query_report', {
-    description: 'Все шесть форм отчётов Метрики: table, bytime, drilldown, comparison, comparison_drilldown, pivot. Любые нативные параметры API, метрики, сегменты, атрибуция, timezone, preset, ecommerce, несколько ids. accuracy=full по умолчанию. Сохраняет весь ответ, включая семплирование и ограничения данных. Одна страница; для всей таблицы используйте export_report.',
+    description: 'Все шесть форм отчётов Метрики: table, bytime, drilldown, comparison, comparison_drilldown, pivot. Посещаемость, страницы, события, цели, источники, аудитория и контент. Нативные параметры API, сегменты, атрибуция, timezone, preset, несколько ids. accuracy=full по умолчанию. Сохраняет весь ответ, включая семплирование и ограничения данных. Одна страница; для всей таблицы используйте export_report.',
     inputSchema: queryReportSchema, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   }, (args) => app.reports.query(args));
 

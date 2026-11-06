@@ -212,7 +212,7 @@ test('exposes catalog, report field discovery and full report data through MCP',
   assert.equal(tools.find((tool) => tool.name === 'write_api').annotations.destructiveHint, true);
   const catalog = await client.callTool({ name: 'list_api_operations', arguments: { category: 'logs' } });
   assert.equal(catalog.structuredContent.total, 7);
-  const fields = await client.callTool({ name: 'search_report_fields', arguments: { search: 'доход' } });
+  const fields = await client.callTool({ name: 'search_report_fields', arguments: { search: 'просмотр' } });
   assert.ok(fields.structuredContent.total > 0);
   const result = await client.callTool({ name: 'query_report', arguments: { kind: 'bytime', parameters: { metrics: ['ym:s:users'], group: 'day' } } });
   assert.deepEqual(result.structuredContent, report);

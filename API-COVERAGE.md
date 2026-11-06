@@ -2,7 +2,11 @@
 
 Снимок официального справочника: 2026-11-05, revision `r21770580`.
 
-Всего: 108 методов. Методы доступны через `read_api` / `write_api`;
+Профиль: аналитика сайта без рекламы и электронной коммерции.
+Исключены расходы и клиенты Директа, РСЯ, Adfox, Prebid, импорт заказов и товаров, рекламные и торговые поля отчётов.
+Органический поиск, UTM-метки, события и обычные цели сохранены.
+
+Всего: 96 методов. Методы доступны через `read_api` / `write_api`;
 контракт и параметры — через `get_api_operation`. Новые методы после даты снимка требуют обновления каталога.
 
 Проверка маршрутизации выполняется на подставном HTTP-клиенте; доступность для реального аккаунта определяется правами и квотами API.
@@ -68,23 +72,11 @@
 | `management_delegates_deleteDelegate` | DELETE | Удаление представителя | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/delegates/deleteDelegate) |
 | `management_counter-label_setCounterLabel` | POST | Привязать счетчик к метке | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/counter-label/setCounterLabel) |
 | `management_counter-label_unsetCounterLabel` | DELETE | Отменить привязку счетчика к метке | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/counter-label/unsetCounterLabel) |
-| `management_clients_getClients` | GET | Список доступных клиентов | чтение | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/clients/getClients) |
 | `management_cloud_getExportsByCounter` | GET | Получение информации об объектах, которые экспортируются в Yandex Cloud | чтение | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/cloud/getExportsByCounter) |
 | `management_cloud_removeCounter` | DELETE | Отключение экспорта на счетчике | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/cloud/removeCounter) |
-| `management_expense_uploadMultipart` | POST | Загрузка расходов как multipart/form-data | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/expense/uploadMultipart) |
-| `management_expense_uploadRemoveSingleLine` | POST | Удаление данных о расходах в запросе | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/expense/uploadRemoveSingleLine) |
-| `management_expense_uploadRemoveBody_1` | POST | Удаление данных о расходах как multipart/form-data | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/expense/uploadRemoveBody_1) |
-| `management_expense_findAll_2` | GET | Список загрузок расходов | чтение | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/expense/findAll_2) |
-| `management_expense_findById_2` | GET | Информация о загрузке расходов | чтение | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/expense/findById_2) |
-| `management_schema_uploadSimpleOrders` | POST | Загрузка упрощенных данных о клиентах и заказах (CSV) | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/uploadSimpleOrders) |
-| `management_schema_mapOrderStatuses` | POST | Сопоставление статусов заказов | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/mapOrderStatuses) |
-| `management_schema_getOrderStatuses` | GET | Список сопоставленных статусов заказов | чтение | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/getOrderStatuses) |
 | `management_schema_uploadContacts` | POST | Загрузка данных о клиентах (CSV) | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/uploadContacts) |
 | `management_schema_uploadContactJson_1` | POST | Загрузка данных о клиентах (JSON) | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/uploadContactJson_1) |
-| `management_schema_uploadOrders` | POST | Загрузка заказов (CSV) | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/uploadOrders) |
-| `management_schema_uploadOrdersJson_1` | POST | Загрузка заказов (JSON) | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/uploadOrdersJson_1) |
 | `management_schema_createAttributes` | POST | Создание атрибутов | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/createAttributes) |
-| `management_schema_createProducts` | POST | Создание списка товаров | запись | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/createProducts) |
 | `management_schema_getAttributes` | GET | Информация о всех атрибутах | чтение | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/getAttributes) |
 | `management_schema_getPredefinedTypes` | GET | Информация о типах пользовательских атрибутов | чтение | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/getPredefinedTypes) |
 | `management_schema_getTypes` | GET | Информация о типах системных атрибутов | чтение | [Источник](https://yandex.ru/dev/metrika/ru/management/openapi/schema/getTypes) |
